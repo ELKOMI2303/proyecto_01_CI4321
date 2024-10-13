@@ -89,8 +89,8 @@ import {
       this.group.position.y = 1;
   
       // Velocidad del vehículo
-      this.speed = 0.1;
-      this.rotationSpeed = 0.03;
+      this.speed = 0.5;
+      this.rotationSpeed = 0.1;
     }
   
     public rotateCannonYaw(angle: number) {
