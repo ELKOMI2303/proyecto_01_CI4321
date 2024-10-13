@@ -1,4 +1,4 @@
-import { PerspectiveCamera, Scene, WebGLRenderer, AmbientLight, DirectionalLight } from "three";
+import { PerspectiveCamera, Scene, WebGLRenderer, AmbientLight, DirectionalLight, PlaneGeometry, MeshBasicMaterial, DoubleSide,BackSide, Mesh, SphereGeometry } from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import Vehicle from "../entyties/Vehicle";
 import cube from "../shapes/Cube";
@@ -73,23 +73,50 @@ class GameScene {
     }
 
     public load = () => {
-      //  this._scene.add(cube);
+    
+        const groundGeometry = new PlaneGeometry(200, 200); // Crear un plano de 200x200 unidades
+        const groundMaterial = new MeshBasicMaterial({ color:0x228B22}); // Suelo de color verde
+        const plane = new Mesh(groundGeometry, groundMaterial);
+        plane.rotation.x = -Math.PI / 2; // Rotar para que quede plano sobre el eje XZ
+        plane.position.y = 0.5; // Colocarlo a nivel del suelo
+        this._scene.add(plane);
+
+
+                // Crear una esfera grande para el cielo
+        const skyGeometry = new SphereGeometry(500, 32, 32); // Una esfera grande
+        const skyMaterial = new MeshBasicMaterial({ color: 0x87CEEB, side: BackSide }); // Azul claro tipo cielo
+        const sky = new Mesh(skyGeometry, skyMaterial);
+        this._scene.add(sky);
+
+
     };
 
 
     private onKeyDown = (event: KeyboardEvent) => {
-        switch (event.code) {
-            case 'ArrowUp': // Mover el cañón hacia arriba
-                this._vehicle.rotateCannonPitch(0.1); // Ajustar el valor para la velocidad de inclinación
+        switch (event.key.toLowerCase()) {  // Asegurar que reconozca las teclas en minúsculas
+            case 'arrowup': // Mover el cañón hacia arriba
+                this._vehicle.rotateCannonPitch(0.1); 
                 break;
-            case 'ArrowDown': // Mover el cañón hacia abajo
-                this._vehicle.rotateCannonPitch(-0.1); // Ajustar el valor para la velocidad de inclinación
+            case 'arrowdown': // Mover el cañón hacia abajo
+                this._vehicle.rotateCannonPitch(-0.1); 
                 break;
-            case 'ArrowLeft': // Rotar el cañón a la izquierda
-                this._vehicle.rotateCannonYaw(0.1); // Ajustar el valor para la velocidad de rotación
+            case 'arrowleft': // Rotar el cañón a la izquierda
+                this._vehicle.rotateCannonYaw(0.1);
                 break;
-            case 'ArrowRight': // Rotar el cañón a la derecha
-                this._vehicle.rotateCannonYaw(-0.1); // Ajustar el valor para la velocidad de rotación
+            case 'arrowright': // Rotar el cañón a la derecha
+                this._vehicle.rotateCannonYaw(-0.1); 
+                break;
+            case 'w': // Adelante
+                this._vehicle.moveForward();
+                break;
+            case 's': // Atrás
+                this._vehicle.moveBackward();
+                break;
+            case 'a': // Rotar a la izquierda
+                this._vehicle.rotateLeft();
+                break;
+            case 'd': // Rotar a la derecha
+                this._vehicle.rotateRight();
                 break;
         }
     }
