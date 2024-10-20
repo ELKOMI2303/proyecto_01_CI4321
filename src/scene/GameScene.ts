@@ -6,13 +6,16 @@ import {
   DirectionalLight,
   PlaneGeometry,
   MeshBasicMaterial,
-  BackSide,
+
   Mesh,
-  SphereGeometry,
+
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import Vehicle from "../entyties/Vehicle";
 import cube from "../shapes/Cube";
+import skybox from "../shapes/skybox";
+import plane from "../shapes/plane";
+
 // import Skybox from "../shapes/Skybox";
 
 class GameScene {
@@ -52,7 +55,7 @@ class GameScene {
     targetElement.appendChild(this._renderer.domElement);
 
     const aspectRatio = this._width / this._height;
-    this._camera = new PerspectiveCamera(45, aspectRatio, 0.1, 1000);
+    this._camera = new PerspectiveCamera(45, aspectRatio, 0.1, 30000);
     this._camera.position.set(10, 10, 10);
     this._camera.lookAt(0, 0, 0);
 
@@ -99,28 +102,20 @@ class GameScene {
   };
 
   public load = () => {
-    // Suelo
-    const groundGeometry = new PlaneGeometry(200, 200);
-    const groundMaterial = new MeshBasicMaterial({ color: 0x228b22 });
-    const plane = new Mesh(groundGeometry, groundMaterial);
-    plane.rotation.x = -Math.PI / 2;
-    plane.position.y = 0.5;
+
+
+    this._scene.add(skybox);
+    skybox.position.set(0, 0, 0);
+
+
     this._scene.add(plane);
 
-    // Cielo
-    const skyGeometry = new SphereGeometry(500, 32, 32);
-    const skyMaterial = new MeshBasicMaterial({
-      color: 0x87ceeb,
-      side: BackSide,
-    });
-    const sky = new Mesh(skyGeometry, skyMaterial);
-    this._scene.add(sky);
 
     // Añadir el cubo a la escena
     this._scene.add(cube);
 
     // Opcional: Ajustar la posición del cubo si es necesario
-    cube.position.set(0, 1, 10); // Mueve el cubo en la escena según lo necesites
+    cube.position.set(0, 3, 10); // Mueve el cubo en la escena según lo necesites
   };
 
   private onKeyDown = (event: KeyboardEvent) => {

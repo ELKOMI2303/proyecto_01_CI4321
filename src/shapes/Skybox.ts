@@ -1,14 +1,22 @@
-import { CubeTextureLoader } from 'three';
 
-// Cargar las 6 texturas del Skybox
-const loader = new CubeTextureLoader();
-const Skybox = loader.load([
-  '/right.png',   // Derecha
-  '/left.png',    // Izquierda
-  '/top.png',     // Arriba
-  '/bottom.png',  // Abajo
-  '/front.png',   // Frente
-  '/back.png',    // Atrás
-]);
+import { MeshBasicMaterial, TextureLoader, BoxGeometry,BackSide,Mesh } from "three";
+const ft = new TextureLoader().load("/blizzard_ft.jpg");
+const bk = new TextureLoader().load("/blizzard_bk.jpg");
+const up = new TextureLoader().load("/blizzard_up.jpg");
+const dn = new TextureLoader().load("/blizzard_dn.jpg");
+const rt = new TextureLoader().load("/blizzard_rt.jpg");
+const lf = new TextureLoader().load("/blizzard_lf.jpg");
 
-export default Skybox;
+let material_array = [];
+material_array.push(new MeshBasicMaterial({map:ft, side:BackSide}));
+material_array.push(new MeshBasicMaterial({map:bk, side:BackSide}));
+material_array.push(new MeshBasicMaterial({map:up, side:BackSide}));
+material_array.push(new MeshBasicMaterial({map:dn, side:BackSide}));
+material_array.push(new MeshBasicMaterial({map:rt, side:BackSide}));
+material_array.push(new MeshBasicMaterial({map:lf, side:BackSide}));
+
+  // Optional: Create a skybox mesh if needed for other effects
+  var skyboxGeo = new BoxGeometry(10000,10000, 10000);
+  var skybox = new Mesh(skyboxGeo, material_array);
+export default skybox;
+  
