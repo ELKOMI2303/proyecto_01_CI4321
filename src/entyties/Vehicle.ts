@@ -10,7 +10,9 @@ import {
   ArrowHelper,
   Color,
   BufferGeometry, BufferAttribute,
-  DoubleSide
+  DoubleSide,
+  MeshDepthMaterial,
+  MeshPhongMaterial
 } from "three";
 
 import Projectile from "./Projectile"; // Asegúrate de ajustar la ruta según tu estructura de carpetas
@@ -29,6 +31,7 @@ class Vehicle {
   private rotationSpeed: number;
   private wheels: Mesh[] = [];
   private wheelCenters: Mesh[] = [];
+  private cannonSphereContainer: Object3D;
 
   // Object Pool de proyectiles
   private projectilePool: Projectile[] = [];
@@ -278,13 +281,18 @@ class Vehicle {
     const normalArray = new Float32Array(normals_esphere);
     const indexArray = new Uint16Array(indices_esphere);
 
+  // Crear el contenedor de la esfera del cañón
+  this.cannonSphereContainer = new Object3D();
+  this.cannonSphereContainer.position.set(0, 0, -3); // Posición del contenedor
+
+
     // Asignar los atributos a la geometría
     cannonSphereGeometry.setAttribute('position', new BufferAttribute(vertexArray, 3));
     cannonSphereGeometry.setAttribute('normal', new BufferAttribute(normalArray, 3));
     cannonSphereGeometry.setIndex(new BufferAttribute(indexArray, 1));
 
     // Crear material
-    const cannonSphereMaterial = new MeshBasicMaterial({
+    const cannonSphereMaterial = new MeshPhongMaterial({
       color: 0xff0000,
       side: DoubleSide // Esto hace que ambos lados del material sean visibles y sólidos
     });
@@ -293,8 +301,15 @@ class Vehicle {
     cannonSphereMaterial.depthWrite = true
 
     this.cannonSphere = new Mesh(cannonSphereGeometry, cannonSphereMaterial);
-    this.cannonSphere.position.set(0, 0, -3);
-    this.cannon.add(this.cannonSphere);
+    this.cannonSphere.position.set(0, 0, 0);
+    // this.cannon.add(this.cannonSphere);
+    this.cannonSphereContainer.add(this.cannonSphere);
+
+    this.cannonSphere.castShadow = true; // Proyecta sombras
+    this.cannonSphere.receiveShadow = true; // Recibe sombras
+
+    // Añadir el contenedor de la esfera al cañón
+    this.cannon.add(this.cannonSphereContainer);
 
     // Contenedor del barril del cañón
     this.cannonBarrelContainer = new Object3D();
@@ -359,7 +374,7 @@ class Vehicle {
 
     // Agregar la flecha para visualizar la dirección del disparo
     this.directionArrow = new ArrowHelper(
-      new Vector3(0, 0, 1), // Cambiado de (0, 0, -1) a (0, 0, 1) para apuntar hacia adelante
+      new Vector3(0, 0, 0), // Cambiado de (0, 0, -1) a (0, 0, 1) para apuntar hacia adelante
       new Vector3(0, 0, 0), // Punto de inicio relativo al muzzle
       2, // Longitud
       new Color(0x00ff00) // Color verde
@@ -379,7 +394,7 @@ class Vehicle {
     }
 
     // Velocidad del vehículo
-    this.speed = 10; // unidades por segundo
+    this.speed = 30; // unidades por segundo
     this.rotationSpeed = Math.PI/4; // radianes por segundo
     this.cannonRotationSpeed = this.rotationSpeed;
     // Inicializar la rotación del cañón
@@ -406,7 +421,7 @@ public rotateCannonPitch(angle: number) {
   const limitedAngle = newPitch - this.currentPitch;
   this.currentPitch = newPitch;
   const quaternion = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), limitedAngle);
-  
+  this.rotateCannonSphere(angle);
   // Aplicar la rotación del cañón en pitch
   this.cannonBarrel.quaternion.multiplyQuaternions(quaternion, this.cannonBarrel.quaternion);
 
@@ -427,7 +442,7 @@ public rotateLeft(delta: number) {
   
   // Reaplicar la rotación del cañón
   this.cannonBarrelContainer.quaternion.copy(currentCannonRotation);
-  
+  // this.updateCannonPosition();
   // Actualiza la flecha de dirección
   this.updateDirectionArrow();
 }
@@ -445,7 +460,7 @@ public rotateRight(delta: number) {
   
   // Reaplicar la rotación del cañón
   this.cannonBarrelContainer.quaternion.copy(currentCannonRotation);
-  
+  // this.updateCannonPosition();
   // Actualiza la flecha de dirección
   this.updateDirectionArrow();
 }
@@ -455,6 +470,7 @@ public rotateRight(delta: number) {
     const moveVector = this.direction.clone().multiplyScalar(this.speed * delta);
     this.group.position.add(moveVector);
     this.rotateWheels(this.speed * delta);
+    // this.updateCannonPosition();
   }
 
   // Movimiento hacia atrás
@@ -462,6 +478,7 @@ public rotateRight(delta: number) {
     const moveVector = this.direction.clone().multiplyScalar(-this.speed * delta);
     this.group.position.add(moveVector);
     this.rotateWheels(-this.speed * delta);
+    // this.updateCannonPosition();
   }
 
   // Rotación de las ruedas
@@ -533,6 +550,16 @@ public rotateRight(delta: number) {
     projectile.activate(barrelEnd, direction, speed, type);
   }
 
+
+  // Función para rotar la esfera sobre su propio eje
+  public rotateCannonSphere(angle: number) {
+    const quaternion = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), angle); // Rotar en el eje Y por ejemplo
+    this.cannonSphereContainer.quaternion.multiplyQuaternions(quaternion, this.cannonSphereContainer.quaternion);
+
+    // Actualizar cualquier otro componente si es necesario
+    // this.updateDirectionArrow();
+  }
+
   // Actualización del vehículo
   public update(delta: number) {
     // Actualizar proyectiles
@@ -546,6 +573,21 @@ public rotateRight(delta: number) {
     // Actualizar la flecha de dirección
     this.updateDirectionArrow();
   }
+
+  public updateCannonPosition() {
+    // Obtener la posición actual del vehículo
+    const vehiclePosition = this.group.position.clone();
+  
+    // Ajustar la posición del cañón para que siga al vehículo (pero no la rotación)
+    this.cannon.position.set(
+      vehiclePosition.x,        // Misma posición X
+      vehiclePosition.y + 2,    // Ajuste en Y para mantener el cañón en la parte superior del vehículo
+      vehiclePosition.z + 3  // Posición en Z hacia adelante para que el cañón apunte correctamente
+    );
+  }
+
 }
 
 export default Vehicle;
+
+

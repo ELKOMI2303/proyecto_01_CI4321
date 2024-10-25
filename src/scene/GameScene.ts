@@ -67,7 +67,7 @@ class GameScene {
     this._scene.add(ambientLight);
 
     const directionalLight = new DirectionalLight(0xffffff, 1.5);
-    directionalLight.position.set(10, 10, 10);
+    directionalLight.position.set(10, 5, 15);
     // Habilitar sombras
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.width = 1024; // Tamaño de las sombras
@@ -88,6 +88,7 @@ class GameScene {
     // Crear y añadir el vehículo
     this._vehicle = new Vehicle();
     this._scene.add(this._vehicle.group);
+    // this._scene.add(this._vehicle.cannon);
 
     // Asignar el Skybox como fondo de la escena
     // this._scene.background = Skybox; // Aquí se agrega el Skybox
@@ -115,7 +116,7 @@ class GameScene {
     this._scene.add(cube);
 
     // Opcional: Ajustar la posición del cubo si es necesario
-    cube.position.set(0, 3, 10); // Mueve el cubo en la escena según lo necesites
+    cube.position.set(0, 1.5, 10); // Mueve el cubo en la escena según lo necesites
   };
 
   private onKeyDown = (event: KeyboardEvent) => {
