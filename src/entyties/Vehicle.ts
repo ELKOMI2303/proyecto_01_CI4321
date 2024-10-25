@@ -49,6 +49,11 @@ class Vehicle {
   private minPitch: number = -Math.PI / 8; // -22.5 grados
   private maxPitch: number = Math.PI / 4; // 45 grados
 
+  // Método para obtener el pool de proyectiles
+  public getProjectiles(): Projectile[] {
+    return this.projectilePool;
+  }
+
   constructor() {
     this.group = new Group();
 

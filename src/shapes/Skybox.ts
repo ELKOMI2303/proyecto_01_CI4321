@@ -17,6 +17,6 @@ material_array.push(new MeshBasicMaterial({map:lf, side:BackSide}));
 
   // Optional: Create a skybox mesh if needed for other effects
   var skyboxGeo = new BoxGeometry(10000,10000, 10000);
-  var skybox = new Mesh(skyboxGeo, material_array);
-export default skybox;
+  var Skybox = new Mesh(skyboxGeo, material_array);
+export default Skybox;
   

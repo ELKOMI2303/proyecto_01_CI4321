@@ -4,19 +4,14 @@ import {
   WebGLRenderer,
   AmbientLight,
   DirectionalLight,
-  PlaneGeometry,
-  MeshBasicMaterial,
-
-  Mesh,
-
+  Box3,
+  Sphere,
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import Vehicle from "../entyties/Vehicle";
 import cube from "../shapes/Cube";
-import skybox from "../shapes/skybox";
+import skybox from "../shapes/Skybox";
 import plane from "../shapes/plane";
-
-// import Skybox from "../shapes/Skybox";
 
 class GameScene {
   private static _instance = new GameScene();
@@ -31,8 +26,11 @@ class GameScene {
   private readonly _scene = new Scene();
   private _vehicle: Vehicle;
   private _controls: OrbitControls;
-
   private lastTime: number = 0;
+  private cubeHits: number = 0;
+
+  // Bounding Box para el cubo
+  private cubeBoundingBox: Box3;
 
   // Estado para el modo de disparo
   private shootMode: "rectilinear" | "parabolic" = "rectilinear";
@@ -68,9 +66,8 @@ class GameScene {
 
     const directionalLight = new DirectionalLight(0xffffff, 1.5);
     directionalLight.position.set(10, 5, 15);
-    // Habilitar sombras
     directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 1024; // Tamaño de las sombras
+    directionalLight.shadow.mapSize.width = 1024;
     directionalLight.shadow.mapSize.height = 1024;
     directionalLight.shadow.camera.near = 0.5;
     directionalLight.shadow.camera.far = 500;
@@ -88,10 +85,15 @@ class GameScene {
     // Crear y añadir el vehículo
     this._vehicle = new Vehicle();
     this._scene.add(this._vehicle.group);
-    // this._scene.add(this._vehicle.cannon);
 
-    // Asignar el Skybox como fondo de la escena
-    // this._scene.background = Skybox; // Aquí se agrega el Skybox
+    // Añadir el cubo y calcular su Bounding Box
+    this._scene.add(cube);
+    cube.position.set(0, 1.5, 10);
+    this.cubeBoundingBox = new Box3().setFromObject(cube);
+
+    // Añadir el cielo y el plano
+    this._scene.add(skybox);
+    this._scene.add(plane);
   }
 
   private resize = () => {
@@ -103,14 +105,10 @@ class GameScene {
   };
 
   public load = () => {
-
-
     this._scene.add(skybox);
     skybox.position.set(0, 0, 0);
 
-
     this._scene.add(plane);
-
 
     // Añadir el cubo a la escena
     this._scene.add(cube);
@@ -120,41 +118,41 @@ class GameScene {
   };
 
   private onKeyDown = (event: KeyboardEvent) => {
-    const delta = 0.016; // Asumir ~60 FPS, 16ms por frame
+    const delta = 0.016;
 
     switch (event.key.toLowerCase()) {
-      case "arrowup": // Mover el cañón hacia arriba
+      case "arrowup":
         this._vehicle.rotateCannonPitch(-0.1);
         break;
-      case "arrowdown": // Mover el cañón hacia abajo
+      case "arrowdown":
         this._vehicle.rotateCannonPitch(0.1);
         break;
-      case "arrowleft": // Rotar el cañón a la izquierda
+      case "arrowleft":
         this._vehicle.rotateCannonYaw(0.1);
         break;
-      case "arrowright": // Rotar el cañón a la derecha
+      case "arrowright":
         this._vehicle.rotateCannonYaw(-0.1);
         break;
-      case "w": // Adelante
+      case "w":
         this._vehicle.moveForward(delta);
         break;
-      case "s": // Atrás
+      case "s":
         this._vehicle.moveBackward(delta);
         break;
-      case "a": // Rotar a la izquierda
+      case "a":
         this._vehicle.rotateLeft(delta);
         break;
-      case "d": // Rotar a la derecha
+      case "d":
         this._vehicle.rotateRight(delta);
         break;
-      case " ": // Disparar
+      case " ":
         this._vehicle.shoot(this.shootMode);
         break;
-      case "1": // Cambiar a disparo rectilíneo
+      case "1":
         this.shootMode = "rectilinear";
         console.log("Modo de disparo: Rectilíneo");
         break;
-      case "2": // Cambiar a disparo parabólico
+      case "2":
         this.shootMode = "parabolic";
         console.log("Modo de disparo: Parabólico");
         break;
@@ -163,10 +161,66 @@ class GameScene {
 
   public render = (time: number) => {
     requestAnimationFrame(this.render);
-    const delta = (time - this.lastTime) / 1000; // delta en segundos
+    const delta = (time - this.lastTime) / 1000;
     this.lastTime = time;
 
+    // Actualizar y verificar colisiones
     this._vehicle.update(delta);
+
+    // Obtener proyectiles desde el vehículo
+    const projectiles = this._vehicle.getProjectiles();
+    projectiles.forEach((projectile) => {
+      // Si el cubo está destruido, ignora las colisiones
+      if (this.cubeHits >= 3) {
+        // Desactiva el proyectil si el cubo ya está destruido
+        // projectile.deactivate();
+        return;
+      }
+
+      // Crear una esfera de colisión para el proyectil
+      const projectileBoundingSphere = new Sphere(
+        projectile.mesh.position,
+        projectile.radius
+      );
+
+      // Verificar colisión entre el proyectil y el cubo
+      if (
+        projectile.active &&
+        projectileBoundingSphere.intersectsBox(this.cubeBoundingBox)
+      ) {
+        console.log("¡Impacto en el cubo!");
+        this.cubeHits += 1; // Incrementa la vida del cubo
+
+        // Cambia el color del cubo al recibir un impacto
+        cube.material.color.setHex(0xff0000);
+
+        // Elimina o desactiva el proyectil
+        this._scene.remove(projectile.mesh);
+        projectile.deactivate();
+
+        // Restablece el color del cubo después de un corto tiempoa verde
+        setTimeout(() => {
+          if (this.cubeHits < 3) {
+            cube.material.color.setHex(0x00ff00); // Solo cambia el color si no está destruido
+          }
+        }, 200);
+
+        // Si la vida llega a 3, elimina el cubo
+        if (this.cubeHits >= 3) {
+          this._scene.remove(cube);
+          console.log("¡Cubo destruido!");
+        }
+      }
+
+      // Verificar si el proyectil ha impactado con el suelo
+      else if ( projectile.active && projectile.mesh.position.y <= 0) {
+        // Suponiendo que el suelo está en y = 0
+        console.log("¡Impacto en el suelo!");
+        this._scene.remove(projectile.mesh); // Remover el proyectil
+        projectile.deactivate(); // Desactivar el proyectil
+      }
+    });
+
     this._controls.update();
     this._renderer.render(this._scene, this._camera);
   };
