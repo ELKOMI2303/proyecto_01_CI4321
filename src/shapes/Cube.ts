@@ -33,27 +33,27 @@ const indices = [
   20, 21, 22, 22, 23, 20  // Izquierda
 ];
 
-// Coordenadas de textura (UVs)
+// Coordenadas UV para usar la octava textura en todas las caras
 const uvs = new Float32Array([
-  // Frente
-  0, 0, 1, 0, 1, 1, 0, 1,
+  // Frontal
+  2/3, 2/3,  1, 2/3,  1, 1,  2/3, 1,
   // Atrás
-  0, 0, 0, 1, 1, 1, 1, 0,
+  2/3, 2/3,  1, 2/3,  1, 1,  2/3, 1,
   // Arriba
-  0, 0, 0, 1, 1, 1, 1, 0,
+  2/3, 2/3,  1, 2/3,  1, 1,  2/3, 1,
   // Abajo
-  0, 0, 1, 0, 1, 1, 0, 1,
+  2/3, 2/3,  1, 2/3,  1, 1,  2/3, 1,
   // Derecha
-  0, 0, 1, 0, 1, 1, 0, 1,
+  2/3, 2/3,  1, 2/3,  1, 1,  2/3, 1,
   // Izquierda
-  0, 0, 0, 1, 1, 1, 1, 0
+  2/3, 2/3,  1, 2/3,  1, 1,  2/3, 1
 ]);
 
 // Añadir los atributos a la geometría
 geometry.setIndex(indices);
 geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3));
 geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2));
-geometry.scale(0.5,0.5,0.5)
+geometry.scale(0.5, 0.5, 0.5);
 
 // Crear el material con la textura
 const material = new MeshBasicMaterial({ map: texture });

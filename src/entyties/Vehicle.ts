@@ -8,12 +8,11 @@ import {
   Vector3,
   Quaternion,
   ArrowHelper,
-  Color,
   BufferGeometry,
   BufferAttribute,
   DoubleSide,
-  MeshDepthMaterial,
   MeshPhongMaterial,
+  MeshStandardMaterial,
 } from "three";
 
 import Projectile from "./Projectile"; // Asegúrate de ajustar la ruta según tu estructura de carpetas
@@ -59,288 +58,263 @@ class Vehicle {
 
     const bodyGeometry = new BufferGeometry();
 
-    // Definimos los vértices del paralelepípedo
-    const vertices = new Float32Array([
-      // Frente
-      -2.25,
-      -1,
-      -3, // Vértice 0
-      2.25,
-      -1,
-      -3, // Vértice 1
-      2.25,
-      1,
-      -3, // Vértice 2
-      -2.25,
-      1,
-      -3, // Vértice 3
+// Definimos los vértices del paralelepípedo
+const vertices = new Float32Array([
+    // Frente
+    -2.25, -1, -3,  // Vértice 0
+    2.25, -1, -3,   // Vértice 1
+    2.25, 1, -3,    // Vértice 2
+    -2.25, 1, -3,   // Vértice 3
+    // Atrás
+    -2.25, -1, 3,   // Vértice 4
+    2.25, -1, 3,    // Vértice 5
+    2.25, 1, 3,     // Vértice 6
+    -2.25, 1, 3     // Vértice 7
+]);
 
-      // Atrás
-      -2.25,
-      -1,
-      3, // Vértice 4
-      2.25,
-      -1,
-      3, // Vértice 5
-      2.25,
-      1,
-      3, // Vértice 6
-      -2.25,
-      1,
-      3, // Vértice 7
-    ]);
+const indices = new Uint16Array([
+    // Caras frontales
+    0, 1, 2, 0, 2, 3,
+    // Caras traseras
+    4, 6, 5, 4, 7, 6,
+    // Caras laterales
+    0, 4, 5, 0, 5, 1, 
+    1, 5, 6, 1, 6, 2, 
+    2, 6, 7, 2, 7, 3, 
+    3, 7, 4, 3, 4, 0
+]);
 
-    const indices = new Uint16Array([
-      // Caras frontales
-      0, 1, 2, 0, 2, 3,
-      // Caras traseras
-      4, 6, 5, 4, 7, 6,
-      // Caras laterales
-      0, 4, 5, 0, 5, 1, 1, 5, 6, 1, 6, 2, 2, 6, 7, 2, 7, 3, 3, 7, 4, 3, 4, 0,
-    ]);
+// Asignamos los atributos de posición y los índices a la geometría
+bodyGeometry.setAttribute("position", new BufferAttribute(vertices, 3));
+bodyGeometry.setIndex(new BufferAttribute(indices, 1));
 
-    // Asignamos los atributos de posición y los índices a la geometría
-    bodyGeometry.setAttribute("position", new BufferAttribute(vertices, 3));
-    bodyGeometry.setIndex(new BufferAttribute(indices, 1));
+// Computar normales para asegurar que las caras se rendericen correctamente
+bodyGeometry.computeVertexNormals();
 
-    // Crear el material (opcionalmente, cambia el material si es necesario)
-    const bodyMaterial = new MeshBasicMaterial({
-      color: 0x555555,
-      side: DoubleSide, // Esto hace que ambos lados del material sean visibles y sólidos
-    });
+// Crear el material metalizado verde militar
+const bodyMaterial = new MeshStandardMaterial({
+  color: 0x6B8E23, // Verde militar claro
+  metalness: 0.8,  // Alto nivel de metalizado
+  roughness: 0.2,  // Suavidad de la superficie
+  side: DoubleSide // Asegura que ambas caras sean visibles
+});
 
-    // Esta propiedad asegura que el material no será transparente.
-    bodyMaterial.depthWrite = true;
+// Esta propiedad asegura que el material no será transparente.
+bodyMaterial.depthWrite = true;
 
-    const body = new Mesh(bodyGeometry, bodyMaterial);
-    body.position.y = 1;
+// Crear el mesh del cuerpo y asignar la geometría y el material
+const body = new Mesh(bodyGeometry, bodyMaterial);
+body.position.y = 1;
+this.group.add(body);
 
-    this.group.add(body);
+   // Crear la geometría de las ruedas (cilindros)
+const wheelGeometry = new BufferGeometry();
+const segments = 32;
+const radius_cilinder = 1;
+const halfHeight = 0.25;
+const wheelVertices = [];
+const wheelIndices = [];
 
-    // Crear la geometría de las ruedas (cilindros)
-    const wheelGeometry = new BufferGeometry();
-    const segments = 32;
-    const radius_cilinder = 1;
-    const halfHeight = 0.25;
+// Crear los vértices del cilindro y las tapas
+wheelVertices.push(0, halfHeight, 0); // Centro tapa superior
+wheelVertices.push(0, -halfHeight, 0); // Centro tapa inferior
+for (let i = 0; i <= segments; i++) {
+    const theta = (i / segments) * Math.PI * 2;
+    const x = Math.cos(theta) * radius_cilinder;
+    const z = Math.sin(theta) * radius_cilinder;
+    // Parte superior del cilindro
+    wheelVertices.push(x, halfHeight, z);
+    // Parte inferior del cilindro
+    wheelVertices.push(x, -halfHeight, z);
+}
 
-    const wheelVertices = [];
-    const wheelIndices = [];
+// Crear índices para los triángulos de las caras laterales del cilindro
+for (let i = 0; i < segments; i++) {
+    const top1 = 2 + i * 2;
+    const top2 = 2 + (i + 1) * 2;
+    const bottom1 = 2 + i * 2 + 1;
+    const bottom2 = 2 + (i + 1) * 2 + 1;
+    // Caras laterales
+    wheelIndices.push(top1, bottom1, bottom2);
+    wheelIndices.push(top1, bottom2, top2);
+}
 
-    // Crear los vértices del cilindro y las tapas
-    wheelVertices.push(0, halfHeight, 0); // Centro tapa superior
-    wheelVertices.push(0, -halfHeight, 0); // Centro tapa inferior
+// Índices para las tapas (superior e inferior)
+for (let i = 0; i < segments; i++) {
+    const topVertex = 2 + i * 2;
+    const nextTopVertex = 2 + ((i + 1) % segments) * 2;
+    const bottomVertex = 2 + i * 2 + 1;
+    const nextBottomVertex = 2 + ((i + 1) % segments) * 2 + 1;
+    // Tapa superior (usando el vértice del centro de la tapa superior)
+    wheelIndices.push(0, topVertex, nextTopVertex);
+    // Tapa inferior (usando el vértice del centro de la tapa inferior)
+    wheelIndices.push(1, nextBottomVertex, bottomVertex);
+}
 
-    for (let i = 0; i <= segments; i++) {
-      const theta = (i / segments) * Math.PI * 2;
-      const x = Math.cos(theta) * radius_cilinder;
-      const z = Math.sin(theta) * radius_cilinder;
+wheelGeometry.setAttribute(
+    "position",
+    new BufferAttribute(new Float32Array(wheelVertices), 3)
+);
+wheelGeometry.setIndex(wheelIndices);
 
-      // Parte superior del cilindro
-      wheelVertices.push(x, halfHeight, z);
-      // Parte inferior del cilindro
-      wheelVertices.push(x, -halfHeight, z);
-    }
+// Crear la geometría del centro de las ruedas (cubos)
+const centerGeometry = new BufferGeometry();
+const centerVertices = new Float32Array([
+    // Frente
+    -0.3, -0.3, 0.3, 0.3, -0.3, 0.3, 0.3, 0.3, 0.3, -0.3, 0.3, 0.3,
+    // Atrás
+    -0.3, -0.3, -0.3, 0.3, -0.3, -0.3, 0.3, 0.3, -0.3, -0.3, 0.3, -0.3,
+]);
+const centerIndices = [
+    // Frente
+    0, 1, 2, 0, 2, 3,
+    // Atrás
+    4, 6, 5, 4, 7, 6,
+    // Lados
+    0, 4, 5, 0, 5, 1, 1, 5, 6, 1, 6, 2, 2, 6, 7, 2, 7, 3, 3, 7, 4, 3, 4, 0,
+];
 
-    // Crear índices para los triángulos de las caras laterales del cilindro
-    for (let i = 0; i < segments; i++) {
-      const top1 = 2 + i * 2;
-      const top2 = 2 + (i + 1) * 2;
-      const bottom1 = 2 + i * 2 + 1;
-      const bottom2 = 2 + (i + 1) * 2 + 1;
+wheelGeometry.computeVertexNormals();
+centerGeometry.setAttribute(
+    "position",
+    new BufferAttribute(centerVertices, 3)
+);
+centerGeometry.setIndex(centerIndices);
 
-      // Caras laterales
-      wheelIndices.push(top1, bottom1, bottom2);
-      wheelIndices.push(top1, bottom2, top2);
-    }
+// Materiales
+const wheelMaterial = new MeshStandardMaterial({
+    color: 0x6B8E23, // Verde militar claro
+    metalness: 0.8,
+    roughness: 0.2,
+    side: DoubleSide,
+});
+wheelMaterial.depthWrite = true;
 
-    // Índices para las tapas (superior e inferior)
-    for (let i = 0; i < segments; i++) {
-      const topVertex = 2 + i * 2;
-      const nextTopVertex = 2 + ((i + 1) % segments) * 2;
-      const bottomVertex = 2 + i * 2 + 1;
-      const nextBottomVertex = 2 + ((i + 1) % segments) * 2 + 1;
+const centerMaterial = new MeshBasicMaterial({
+    color: 0xffffff, // Blanco
+    side: DoubleSide,
+});
+centerMaterial.depthWrite = true;
 
-      // Tapa superior (usando el vértice del centro de la tapa superior)
-      wheelIndices.push(0, topVertex, nextTopVertex);
+// Posiciones de las ruedas
+const wheelPositions = [
+    [-2.5, 0.5, -2], // Trasera izquierda
+    [2.5, 0.5, -2], // Trasera derecha
+    [-2.5, 0.5, 2], // Delantera izquierda
+    [2.5, 0.5, 2], // Delantera derecha
+];
 
-      // Tapa inferior (usando el vértice del centro de la tapa inferior)
-      wheelIndices.push(1, nextBottomVertex, bottomVertex);
-    }
+// Crear ruedas y centros de las ruedas
+wheelPositions.forEach((pos) => {
+    // Añadir las ruedas
+    const wheel = new Mesh(wheelGeometry, wheelMaterial);
+    wheel.rotation.z = Math.PI / 2;
+    wheel.position.set(pos[0], pos[1], pos[2]);
+    this.group.add(wheel);
+    this.wheels.push(wheel);
 
-    wheelGeometry.setAttribute(
-      "position",
-      new BufferAttribute(new Float32Array(wheelVertices), 3)
-    );
-    wheelGeometry.setIndex(wheelIndices);
-
-    // Crear la geometría del centro de las ruedas (cubos)
-    const centerGeometry = new BufferGeometry();
-
-    const centerVertices = new Float32Array([
-      // Frente
-      -0.3, -0.3, 0.3, 0.3, -0.3, 0.3, 0.3, 0.3, 0.3, -0.3, 0.3, 0.3,
-
-      // Atrás
-      -0.3, -0.3, -0.3, 0.3, -0.3, -0.3, 0.3, 0.3, -0.3, -0.3, 0.3, -0.3,
-    ]);
-
-    const centerIndices = [
-      // Frente
-      0, 1, 2, 0, 2, 3,
-      // Atrás
-      4, 6, 5, 4, 7, 6,
-      // Lados
-      0, 4, 5, 0, 5, 1, 1, 5, 6, 1, 6, 2, 2, 6, 7, 2, 7, 3, 3, 7, 4, 3, 4, 0,
-    ];
-
-    wheelGeometry.computeVertexNormals();
-    centerGeometry.setAttribute(
-      "position",
-      new BufferAttribute(centerVertices, 3)
-    );
-    centerGeometry.setIndex(centerIndices);
-
-    // Materiales
-    const wheelMaterial = new MeshBasicMaterial({
-      color: 0x333333,
-      side: DoubleSide,
-    });
-    wheelMaterial.depthWrite = true;
-
-    const centerMaterial = new MeshBasicMaterial({
-      color: 0xff0000,
-      side: DoubleSide,
-    });
-    centerMaterial.depthWrite = true;
-
-    // Posiciones de las ruedas
-    const wheelPositions = [
-      [-2.5, 0.5, -2], // Trasera izquierda
-      [2.5, 0.5, -2], // Trasera derecha
-      [-2.5, 0.5, 2], // Delantera izquierda
-      [2.5, 0.5, 2], // Delantera derecha
-    ];
-
-    // Crear ruedas y centros de las ruedas
-    wheelPositions.forEach((pos) => {
-      // Añadir las ruedas
-      const wheel = new Mesh(wheelGeometry, wheelMaterial);
-      wheel.rotation.z = Math.PI / 2;
-      wheel.position.set(pos[0], pos[1], pos[2]);
-      this.group.add(wheel);
-      this.wheels.push(wheel);
-
-      // Añadir los centros de las ruedas
-      const wheelCenter = new Mesh(centerGeometry, centerMaterial);
-      wheelCenter.position.set(pos[0], pos[1], pos[2]);
-      this.group.add(wheelCenter);
-      this.wheelCenters.push(wheelCenter);
-    });
-
+    // Añadir los centros de las ruedas
+    const wheelCenter = new Mesh(centerGeometry, centerMaterial);
+    wheelCenter.position.set(pos[0], pos[1], pos[2]);
+    this.group.add(wheelCenter);
+    this.wheelCenters.push(wheelCenter);
+});
     // Cañón
     this.cannon = new Object3D();
+// Parámetros para la esfera
+const radius = 1.8;
+const widthSegments = 32;
+const heightSegments = 32;
 
-    // Parámetros para la esfera
-    const radius = 1.8;
-    const widthSegments = 32;
-    const heightSegments = 32;
+// Crear BufferGeometry
+const cannonSphereGeometry = new BufferGeometry();
 
-    // Crear BufferGeometry
-    const cannonSphereGeometry = new BufferGeometry();
+// Arrays para almacenar los vértices, normales e índices
+const vertices_esphere = [];
+const normals_esphere = [];
+const indices_esphere = [];
 
-    // Arrays para almacenar los vértices, normales e índices
-    const vertices_esphere = [];
-    const normals_esphere = [];
-    const indices_esphere = [];
-
-    // Crear vértices y normales
-    for (let y = 0; y <= heightSegments; y++) {
-      const v = y / heightSegments;
-      const theta = v * Math.PI;
-
-      for (let x = 0; x <= widthSegments; x++) {
+// Crear vértices y normales
+for (let y = 0; y <= heightSegments; y++) {
+    const v = y / heightSegments;
+    const theta = v * Math.PI;
+    for (let x = 0; x <= widthSegments; x++) {
         const u = x / widthSegments;
         const phi = u * Math.PI * 2;
-
         // Coordenadas esféricas
         const sinTheta = Math.sin(theta);
         const cosTheta = Math.cos(theta);
         const sinPhi = Math.sin(phi);
         const cosPhi = Math.cos(phi);
-
         // Calcular posición del vértice
         const vertexX = radius * sinTheta * cosPhi;
         const vertexY = radius * cosTheta;
         const vertexZ = radius * sinTheta * sinPhi;
-
         // Añadir el vértice
         vertices_esphere.push(vertexX, vertexY, vertexZ);
-
         // Calcular normales
         normals_esphere.push(
-          vertexX / radius,
-          vertexY / radius,
-          vertexZ / radius
+            vertexX / radius,
+            vertexY / radius,
+            vertexZ / radius
         );
-      }
     }
+}
 
-    // Crear los índices para los triángulos
-    for (let y = 0; y < heightSegments; y++) {
-      for (let x = 0; x < widthSegments; x++) {
+// Crear los índices para los triángulos
+for (let y = 0; y < heightSegments; y++) {
+    for (let x = 0; x < widthSegments; x++) {
         const a = x + (widthSegments + 1) * y;
         const b = x + (widthSegments + 1) * (y + 1);
         const c = x + 1 + (widthSegments + 1) * y;
         const d = x + 1 + (widthSegments + 1) * (y + 1);
-
         // Primer triángulo
         indices_esphere.push(a, b, d);
-
         // Segundo triángulo
         indices_esphere.push(a, d, c);
-      }
     }
+}
 
-    // Convertir los arrays a tipos de datos de Three.js
-    const vertexArray = new Float32Array(vertices_esphere);
-    const normalArray = new Float32Array(normals_esphere);
-    const indexArray = new Uint16Array(indices_esphere);
+// Convertir los arrays a tipos de datos de Three.js
+const vertexArray = new Float32Array(vertices_esphere);
+const normalArray = new Float32Array(normals_esphere);
+const indexArray = new Uint16Array(indices_esphere);
 
-    // Crear el contenedor de la esfera del cañón
-    this.cannonSphereContainer = new Object3D();
-    this.cannonSphereContainer.position.set(0, 0, -3); // Posición del contenedor
+// Crear el contenedor de la esfera del cañón
+this.cannonSphereContainer = new Object3D();
+this.cannonSphereContainer.position.set(0, 0, -3); // Posición del contenedor
 
-    // Asignar los atributos a la geometría
-    cannonSphereGeometry.setAttribute(
-      "position",
-      new BufferAttribute(vertexArray, 3)
-    );
-    cannonSphereGeometry.setAttribute(
-      "normal",
-      new BufferAttribute(normalArray, 3)
-    );
-    cannonSphereGeometry.setIndex(new BufferAttribute(indexArray, 1));
+// Asignar los atributos a la geometría
+cannonSphereGeometry.setAttribute(
+    "position",
+    new BufferAttribute(vertexArray, 3)
+);
+cannonSphereGeometry.setAttribute(
+    "normal",
+    new BufferAttribute(normalArray, 3)
+);
+cannonSphereGeometry.setIndex(new BufferAttribute(indexArray, 1));
 
-    // Crear material
-    const cannonSphereMaterial = new MeshPhongMaterial({
-      color: 0xff0000,
-      side: DoubleSide, // Esto hace que ambos lados del material sean visibles y sólidos
-    });
+// Crear material metalizado marrón militar oscuro para la esfera del cañón
+const cannonSphereMaterial = new MeshStandardMaterial({
+    color: 0x4b2e0b, // Marrón militar oscuro
+    metalness: 0.8,
+    roughness: 0.2,
+    side: DoubleSide,
+});
+cannonSphereMaterial.depthWrite = true;
 
-    // Esta propiedad asegura que el material no será transparente.
-    cannonSphereMaterial.depthWrite = true;
+// Crear el mesh de la esfera del cañón y asignar la geometría y el material
+this.cannonSphere = new Mesh(cannonSphereGeometry, cannonSphereMaterial);
+this.cannonSphere.position.set(0, 0, 0);
 
-    this.cannonSphere = new Mesh(cannonSphereGeometry, cannonSphereMaterial);
-    this.cannonSphere.position.set(0, 0, 0);
-    // this.cannon.add(this.cannonSphere);
-    this.cannonSphereContainer.add(this.cannonSphere);
+// Añadir la esfera al contenedor y configurar sombras
+this.cannonSphereContainer.add(this.cannonSphere);
+this.cannonSphere.castShadow = true; // Proyecta sombras
+this.cannonSphere.receiveShadow = true; // Recibe sombras
 
-    this.cannonSphere.castShadow = true; // Proyecta sombras
-    this.cannonSphere.receiveShadow = true; // Recibe sombras
-
-    // Añadir el contenedor de la esfera al cañón
-    this.cannon.add(this.cannonSphereContainer);
-
+// Añadir el contenedor de la esfera al cañón
+this.cannon.add(this.cannonSphereContainer);
     // Contenedor del barril del cañón
     this.cannonBarrelContainer = new Object3D();
     this.cannonBarrelContainer.position.set(0, 0, -3);
@@ -429,9 +403,11 @@ class Vehicle {
     cannonBarrelGeometry.setIndex(cannonBarrelIndices);
     cannonBarrelGeometry.computeVertexNormals();
 
-    // Material del barril
-    const cannonBarrelMaterial = new MeshBasicMaterial({
-      color: 0x000000,
+    // Material del barrilRo
+    const cannonBarrelMaterial = new MeshStandardMaterial({
+      color: 0x6B8E23, // Verde militar claro
+      metalness: 0.8,
+      roughness: 0.2,
       side: DoubleSide,
     });
     cannonBarrelMaterial.depthWrite = true;
@@ -508,26 +484,31 @@ class Vehicle {
     this.updateDirectionArrow();
   }
 
-  // Rotación del cañón en pitch usando quaternions
   public rotateCannonPitch(angle: number) {
     let newPitch = this.currentPitch + angle;
-    newPitch = Math.max(this.minPitch, Math.min(newPitch, this.maxPitch));
+
+    // Ajuste: Limitar el ángulo hacia abajo a menos del máximo
+    const maxDownPitch = this.maxPitch * 0.46; // Por ejemplo, 80% del máximo
+    newPitch = Math.max(this.minPitch, Math.min(newPitch, maxDownPitch));
+
     const limitedAngle = newPitch - this.currentPitch;
     this.currentPitch = newPitch;
     const quaternion = new Quaternion().setFromAxisAngle(
-      new Vector3(1, 0, 0),
-      limitedAngle
+        new Vector3(1, 0, 0),
+        limitedAngle
     );
+
     this.rotateCannonSphere(angle);
+    
     // Aplicar la rotación del cañón en pitch
     this.cannonBarrel.quaternion.multiplyQuaternions(
-      quaternion,
-      this.cannonBarrel.quaternion
+        quaternion,
+        this.cannonBarrel.quaternion
     );
 
     // Actualizar la flecha de dirección
     this.updateDirectionArrow();
-  }
+}
 
   // Rotación del vehículo hacia la izquierda
   public rotateLeft(delta: number) {
