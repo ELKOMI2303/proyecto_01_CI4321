@@ -12,7 +12,7 @@ import Vehicle from "../entyties/Vehicle";
 import cube from "../shapes/Cube"; 
 import skybox from "../shapes/Skybox"; 
 import plane from "../shapes/plane";
-import cylinder from "../shapes/Pyramid";
+// import cylinder from "../shapes/Pyramid";
 import pyramid from "../shapes/Pyramid";
 
 class GameScene { 

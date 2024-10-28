@@ -11,7 +11,7 @@ import {
   BufferGeometry,
   BufferAttribute,
   DoubleSide,
-  MeshPhongMaterial,
+  // MeshPhongMaterial,
   MeshStandardMaterial,
 } from "three";
 
@@ -25,7 +25,6 @@ class Vehicle {
   private cannonSphere: Mesh;
   private cannonBarrelContainer: Object3D;
   private cannonBarrel: Mesh;
-  private muzzle: Object3D; // Nuevo
   private speed: number;
   private rotationSpeed: number;
   private wheels: Mesh[] = [];
@@ -36,7 +35,7 @@ class Vehicle {
   private projectilePool: Projectile[] = [];
   private poolSize: number = 10; // Puedes ajustar el tamaño según tus necesidades
 
-  private velocity: Vector3 = new Vector3();
+  // private velocity: Vector3 = new Vector3();
   private direction: Vector3 = new Vector3(0, 0, 1); // Dirección inicial hacia adelante
   private up: Vector3 = new Vector3(0, 1, 0); // Eje Y
 
@@ -463,7 +462,7 @@ this.cannon.add(this.cannonSphereContainer);
     // Velocidad del vehículo
     this.speed = 30; // unidades por segundo
     this.rotationSpeed = Math.PI / 4; // radianes por segundo
-    this.cannonRotationSpeed = this.rotationSpeed;
+    // this.cannonRotationSpeed = this.rotationSpeed;
     // Inicializar la rotación del cañón
     this.cannonBarrel.rotation.x = 0; // Asegurar que la rotación inicial sea 0
     this.currentPitch = 0; // Establecer el ángulo de inclinación actual
