@@ -456,9 +456,9 @@ class Vehicle {
       5,
       0xff0000
     );
-    this.group.add(this.directionArrow);
+    // this.group.add(this.directionArrow);
 
-    this.muzzle.add(this.directionArrow);
+    // this.muzzle.add(this.directionArrow);
 
     this.cannon.position.set(0, 2, 3);
     this.group.add(this.cannon);
@@ -493,7 +493,7 @@ class Vehicle {
     );
 
     // Actualizar la flecha de dirección
-    this.updateDirectionArrow();
+    // this.updateDirectionArrow();
   }
 
   public rotateCannonPitch(angle: number) {
@@ -519,7 +519,7 @@ class Vehicle {
     );
 
     // Actualizar la flecha de dirección
-    this.updateDirectionArrow();
+    // this.updateDirectionArrow();
   }
 
   // Rotación del vehículo hacia la izquierda
@@ -540,7 +540,7 @@ class Vehicle {
     this.cannonBarrelContainer.quaternion.copy(currentCannonRotation);
     // this.updateCannonPosition();
     // Actualiza la flecha de dirección
-    this.updateDirectionArrow();
+    // this.updateDirectionArrow();
   }
 
   // Rotación del vehículo hacia la derecha
@@ -561,7 +561,7 @@ class Vehicle {
     this.cannonBarrelContainer.quaternion.copy(currentCannonRotation);
     // this.updateCannonPosition();
     // Actualiza la flecha de dirección
-    this.updateDirectionArrow();
+    // this.updateDirectionArrow();
   }
 
   // Movimiento hacia adelante
@@ -687,7 +687,7 @@ class Vehicle {
       .normalize();
 
     // Actualizar la flecha de dirección
-    this.updateDirectionArrow();
+    // this.updateDirectionArrow();
   }
 
   public updateCannonPosition() {
