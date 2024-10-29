@@ -173,20 +173,27 @@ class GameScene {
 
   public render = (time: number) => {
     requestAnimationFrame(this.render);
-    const delta = (time - this.lastTime) / 1000;
-    this.lastTime = time;
 
-    if (this.isThirdPerson) {
-      this.updateCameraPosition(); // Actualizar posición de la cámara en tercera persona
-    } else {
-      this._controls.update(); // Actualiza los controles si está en primera persona
+    // Limitar a 30 FPS
+    const fps = 30;
+    const interval = 1000 / fps;
+    const delta = (time - this.lastTime);
+
+    if (delta > interval) {
+        this.lastTime = time - (delta % interval);  // Ajustar el tiempo para evitar acumulación de retrasos
+
+        if (this.isThirdPerson) {
+            this.updateCameraPosition(); // Actualizar posición de la cámara en tercera persona
+        } else {
+            this._controls.update(); // Actualiza los controles si está en primera persona
+        }
+
+        this._vehicle.update(delta / 1000);  // Pasar delta en segundos
+        this.checkCollisions();
+
+        this._renderer.render(this._scene, this._camera);
     }
-
-    this._vehicle.update(delta);
-    this.checkCollisions();
-
-    this._renderer.render(this._scene, this._camera);
-  };
+};
 
   // Método para actualizar la posición de la cámara en tercera persona
   private updateCameraPosition() {
